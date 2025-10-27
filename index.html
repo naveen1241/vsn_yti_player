@@ -389,13 +389,27 @@
     <span class="repeat-all-text"></span>
 </button>
 
-       <div class="volume-speed-container">
+        <div class="volume-speed-container">
             <label for="volume-slider">Vol:</label>
             <input type="range" id="volume-slider" min="0" max="1" value="0.5" step="0.05">
             <label for="speed-slider">Speed:</label>
             <input type="range" id="speed-slider" min="0.5" max="2" value="1" step=".25">
             <span id="speed-display">1.00x</span>
         </div>
+
+        <!-- Audio source selector & YouTube input -->
+        <div style="display:flex; align-items:center; gap:8px;">
+          <label style="font-size:0.9rem;">Source:</label>
+          <select id="sourceSelect" class="control-button" style="height:36px; min-width:110px;">
+            <option value="local" selected>Local MP3</option>
+            <option value="youtube">YouTube</option>
+          </select>
+
+          <input id="yt-url-input" type="text" placeholder="YouTube url or id" style="width:240px; padding:6px; border-radius:6px; border:none;" title="Paste YouTube URL or ID">
+          <button id="yt-load-btn" class="control-button" style="height:36px;">Load YT</button>
+        </div>
+
+	
     </div>
     
     <div class="image-display-container">
@@ -422,6 +436,11 @@
     <div id="jump-to-container"></div>
     
     <audio id="custom-audio-player" preload="metadata"></audio>
+<!-- Hidden YouTube container (audio-only) -->
+<div id="youtube-container" style="display:none;">
+  <div id="youtube-player"></div>
+</div>
+
 </div>
 
 
@@ -445,7 +464,7 @@
     const remainingTimeDisplay = document.getElementById('remaining-time');
     const playPauseBtn = document.getElementById('play-pause-btn');
 
-    const baseUrl = 'https://naveen1241.github.io/vsn_auto_play/VSN/';
+    const baseUrl = 'https://naveen1241.github.io/vsn_yti_player/VSN/';
     audioPlayer.src = baseUrl + 'VSN Audio - Complete_CBR.mp3';
 
     // ---- New Constants and State for Silent Fast-Forward ----
@@ -467,6 +486,141 @@ const repeatAllBtn = document.getElementById('repeat-all-btn');
 const repeatAllTextSpan = repeatAllBtn.querySelector('.repeat-all-text');
 
 let isInternalSeek = false;
+
+
+    // -----------------------------
+    // YouTube integration & switching
+    // -----------------------------
+    let ytPlayer = null;
+    let usingYouTube = false;
+    const sourceSelect = document.getElementById('sourceSelect');
+    const ytUrlInput = document.getElementById('yt-url-input');
+    const ytLoadBtn = document.getElementById('yt-load-btn');
+    const youtubeContainer = document.getElementById('youtube-container');
+
+    // Parse video id from full URL or id (returns null if none)
+    function extractYouTubeId(urlOrId) {
+      if (!urlOrId) return null;
+      // common patterns
+      const idMatch = urlOrId.match(/(?:v=|\/)([0-9A-Za-z_-]{11})(?:[&?]|$)/);
+      if (idMatch && idMatch[1]) return idMatch[1];
+      // if input itself is 11-char id
+      if (/^[0-9A-Za-z_-]{11}$/.test(urlOrId.trim())) return urlOrId.trim();
+      return null;
+    }
+
+    // Called by the YT API when it loads
+    window.onYouTubeIframeAPIReady = function() {
+      // don't create player yet until user loads an id
+      console.log('YouTube IFrame API ready');
+    };
+
+    // create or load video id into player
+    function ensureYTPlayer(videoId) {
+      return new Promise((resolve) => {
+        if (!videoId) return resolve(null);
+        // if player exists, just load the video
+        if (ytPlayer) {
+          try {
+            ytPlayer.cueVideoById(videoId);
+            return resolve(ytPlayer);
+          } catch (e) { console.warn(e); }
+        }
+        // create new YT.Player
+        ytPlayer = new YT.Player('youtube-player', {
+          height: '0', width: '0', // hidden
+          videoId,
+          playerVars: { controls: 0, disablekb: 1, modestbranding: 1 },
+          events: {
+            onReady: () => {
+              console.log('YT player ready for', videoId);
+              resolve(ytPlayer);
+            },
+            onStateChange: (e) => {
+              // nothing heavy here; sync loop handles updates
+            }
+          }
+        });
+      });
+    }
+
+    // When user changes source via drop-down
+    sourceSelect.addEventListener('change', (e) => {
+        const val = e.target.value;
+        if (val === 'youtube') {
+            // switch UI to youtube mode but do not start playback automatically
+            if (ytPlayer) {
+                youtubeContainer.style.display = 'block';
+                audioPlayer.pause();
+                usingYouTube = true;
+                startYTSyncLoop();
+            } else {
+                // keep youtube container hidden until loaded explicitly
+                youtubeContainer.style.display = 'none';
+                usingYouTube = false;
+            }
+        } else {
+            // back to local
+            youtubeContainer.style.display = 'none';
+            stopYTSyncLoop();
+            if (ytPlayer) try { ytPlayer.pauseVideo(); } catch(e){}
+            usingYouTube = false;
+        }
+    });
+
+    // Load YT video id/button
+    ytLoadBtn.addEventListener('click', () => {
+        const candidate = ytUrlInput.value.trim();
+        const id = extractYouTubeId(candidate);
+        if (!id) { alert('Please enter a valid YouTube URL or ID (11 chars)'); return; }
+        ensureYTPlayer(id).then(() => {
+            // cue and show container
+            youtubeContainer.style.display = 'block';
+            sourceSelect.value = 'youtube';
+            usingYouTube = true;
+            audioPlayer.pause();
+            // sync playhead: set youtube to same time as audio when switching
+            const t = audioPlayer.currentTime || 0;
+            try { ytPlayer.seekTo(t, true); } catch(e) {}
+            // do not autoplay unless user presses play
+        });
+    });
+
+
+
+    // sync loop to update UI (progress, image) while using youtube
+    let ytSyncRaf = null;
+    function startYTSyncLoop() {
+      if (ytSyncRaf) return; // already running
+      function tick() {
+        if (!usingYouTube || !ytPlayer || typeof ytPlayer.getCurrentTime !== 'function') {
+          ytSyncRaf = null;
+          return;
+        }
+        const t = ytPlayer.getCurrentTime();
+        // update image/progress using the same functions used by audio mode
+        updateImage(t);
+        if (!isNaN(audioPlayer.duration) && audioPlayer.duration > 0) {
+          // update progress fill: we don't know YT duration reliably until loaded; try getDuration()
+          const dur = ytPlayer.getDuration() || audioPlayer.duration;
+          const pct = (t / dur) * 100;
+          progressBarFill.style.width = `${Math.max(0, Math.min(100, pct))}%`;
+        }
+        // also update textual time display to match
+        elapsedTimeDisplay.textContent = formatTime(t);
+        const dur = ytPlayer.getDuration() || audioPlayer.duration || 0;
+        remainingTimeDisplay.textContent = '-' + formatTime(Math.max(0, dur - t));
+        ytSyncRaf = requestAnimationFrame(tick);
+      }
+      ytSyncRaf = requestAnimationFrame(tick);
+    }
+
+    function stopYTSyncLoop() {
+      if (ytSyncRaf) {
+        cancelAnimationFrame(ytSyncRaf);
+        ytSyncRaf = null;
+      }
+    }
 
 
 
@@ -536,16 +690,29 @@ const sortedSegmentTimestamps = Object.keys(flatImageSyncData).map(parseTime).so
     /**
      * Rewinds the audio by 10 seconds, not going below zero.
      */
-    function rewind10Seconds() {
-        audioPlayer.currentTime = Math.max(0, audioPlayer.currentTime - 10);
+     function rewind10Seconds() {
+        if (sourceSelect.value === 'youtube' && ytPlayer && typeof ytPlayer.getCurrentTime === 'function') {
+            const t = Math.max(0, ytPlayer.getCurrentTime() - 10);
+            try { ytPlayer.seekTo(t, true); } catch(e){ console.warn(e); }
+        } else {
+            audioPlayer.currentTime = Math.max(0, audioPlayer.currentTime - 10);
+        }
     }
+
     
     /**
      * Forwards the audio by 10 seconds, not exceeding the total duration.
      */
     function forward10Seconds() {
-        audioPlayer.currentTime = Math.min(audioPlayer.duration, audioPlayer.currentTime + 10);
+        if (sourceSelect.value === 'youtube' && ytPlayer && typeof ytPlayer.getCurrentTime === 'function') {
+            const dur = ytPlayer.getDuration() || audioPlayer.duration || 0;
+            const t = Math.min(dur, ytPlayer.getCurrentTime() + 10);
+            try { ytPlayer.seekTo(t, true); } catch(e){ console.warn(e); }
+        } else {
+            audioPlayer.currentTime = Math.min(audioPlayer.duration, audioPlayer.currentTime + 10);
+        }
     }
+
 
     function createProgressBarMarkers() {
         const duration = audioPlayer.duration;
@@ -635,15 +802,54 @@ const sortedSegmentTimestamps = Object.keys(flatImageSyncData).map(parseTime).so
     }
 
     // -- Play/Pause and Control handlers --
-    playPauseBtn.addEventListener('click', () => {
-        if (audioPlayer.paused) {
-            audioPlayer.play();
-            playPauseBtn.textContent = '⏸';
+        playPauseBtn.addEventListener('click', () => {
+        if (sourceSelect.value === 'youtube') {
+            // YouTube mode
+            if (!ytPlayer) {
+                const id = extractYouTubeId(ytUrlInput.value);
+                if (!id) { alert('Enter a valid YouTube ID or URL'); return; }
+                ensureYTPlayer(id).then(() => {
+                    usingYouTube = true;
+                    youtubeContainer.style.display = 'block';
+                    audioPlayer.pause();
+                    try { ytPlayer.playVideo(); } catch(e){ console.warn(e); }
+                    playPauseBtn.textContent = '⏸';
+                    startYTSyncLoop();
+                });
+                return;
+            }
+            const state = ytPlayer.getPlayerState && ytPlayer.getPlayerState();
+            if (state === YT.PlayerState.PLAYING) {
+                ytPlayer.pauseVideo();
+                playPauseBtn.textContent = '▶';
+                stopYTSyncLoop();
+            } else {
+                audioPlayer.pause();
+                youtubeContainer.style.display = 'block';
+                try { ytPlayer.playVideo(); } catch(e){ console.warn(e); }
+                playPauseBtn.textContent = '⏸';
+                usingYouTube = true;
+                startYTSyncLoop();
+            }
         } else {
-            audioPlayer.pause();
-            playPauseBtn.textContent = '▶';
+            // Local MP3 mode
+            // If youtube was active, pause it and stop sync
+            if (usingYouTube && ytPlayer) {
+                try { ytPlayer.pauseVideo(); } catch(e){}
+                stopYTSyncLoop();
+                youtubeContainer.style.display = 'none';
+                usingYouTube = false;
+            }
+            if (audioPlayer.paused) {
+                audioPlayer.play();
+                playPauseBtn.textContent = '⏸';
+            } else {
+                audioPlayer.pause();
+                playPauseBtn.textContent = '▶';
+            }
         }
     });
+
 
     rewind10Btn.addEventListener('click', rewind10Seconds);
     forward10Btn.addEventListener('click', forward10Seconds);
@@ -710,21 +916,36 @@ repeatAllBtn.addEventListener('click', () => {
 
 
 
-    progressBarClickArea.addEventListener('click', (e) => {
-        if (isNaN(audioPlayer.duration)) {
-            console.warn('Audio duration is not available yet.');
-            return;
-        }
-        const trackWidth = progressBarTrack.offsetWidth;
-        const clickX = e.offsetX;
-        const newTime = (clickX / trackWidth) * audioPlayer.duration;
-        audioPlayer.currentTime = newTime;
+        progressBarClickArea.addEventListener('click', (e) => {
+        // compute newTime from click
+        if (sourceSelect.value === 'youtube') {
+            if (!ytPlayer) {
+                console.warn('YT player not initialized.');
+                return;
+            }
+            const trackWidth = progressBarTrack.offsetWidth;
+            const clickX = e.offsetX;
+            const pct = clickX / trackWidth;
+            const dur = ytPlayer.getDuration() || audioPlayer.duration || 0;
+            const newTime = pct * dur;
+            try { ytPlayer.seekTo(newTime, true); } catch (err) { console.warn(err); }
+        } else {
+            if (isNaN(audioPlayer.duration)) {
+                console.warn('Audio duration is not available yet.');
+                return;
+            }
+            const trackWidth = progressBarTrack.offsetWidth;
+            const clickX = e.offsetX;
+            const newTime = (clickX / trackWidth) * audioPlayer.duration;
+            audioPlayer.currentTime = newTime;
 
-        if (isRepeatSegmentActive) {
-            segmentEnd = audioPlayer.currentTime;
-            console.log(`Repeat segment end set to ${formatTime(segmentEnd)}`);
+            if (isRepeatSegmentActive) {
+                segmentEnd = audioPlayer.currentTime;
+                console.log(`Repeat segment end set to ${formatTime(segmentEnd)}`);
+            }
         }
     });
+
     
     speedSlider.addEventListener('input', (e) => {
         const selectedSpeed = e.target.value;
@@ -739,6 +960,13 @@ repeatAllBtn.addEventListener('click', () => {
     // Initialize volume
     volumeSlider.value = 0.5;
     audioPlayer.volume = 0.5;
+    ytUrlInput.value = 'RDATflA6WOy0I';
+
+ytUrlInput.addEventListener('input', () => {
+  ytLoadBtn.disabled = !ytUrlInput.value.trim();
+});
+ytLoadBtn.disabled = true;
+
 
 // This is the updated timeupdate event listener.
 // It combines the logic for the single-segment repeat and the new repeat-all segments functionality.
@@ -896,6 +1124,8 @@ audioPlayer.addEventListener('seeked', () => {
 
 
 </script>
+<!-- YouTube API -->
+<script src="https://www.youtube.com/iframe_api"></script>
 
 </body>
 </html>
