@@ -375,6 +375,17 @@
 
 </head>
 <body>
+<!-- Audio source selector & YouTube input -->
+       <div style="display:flex; align-items:center; gap:8px;">
+  <label style="font-size:0.9rem;">Source:</label>
+  <select id="sourceSelect" class="control-button" style="height:36px; min-width:110px;">
+    <option value="local" selected>VISVAS Audio</option>
+    <option value="youtube">M. S. Subbulakshmi</option>
+  </select>
+
+  <input id="yt-url-input" type="text" placeholder="YouTube url or id" style="width:240px; padding:6px; border-radius:6px; border:none; display:none;" title="Paste YouTube URL or ID">
+  <button id="yt-load-btn" class="control-button" style="height:36px; display:none;">Load Other YouTube</button>
+</div>
 
  <div class="audio-player-container">
     <!-- Custom controls in an oval background -->
@@ -396,23 +407,12 @@
             <input type="range" id="speed-slider" min="0.5" max="2" value="1" step=".25">
             <span id="speed-display">1.00x</span>
         </div>
-
-        <!-- Audio source selector & YouTube input -->
-        <div style="display:flex; align-items:center; gap:8px;">
-          <label style="font-size:0.9rem;">Source:</label>
-          <select id="sourceSelect" class="control-button" style="height:36px; min-width:110px;">
-            <option value="local" selected>Local MP3</option>
-            <option value="youtube">YouTube</option>
-          </select>
-
-          <input id="yt-url-input" type="text" placeholder="YouTube url or id" style="width:240px; padding:6px; border-radius:6px; border:none;" title="Paste YouTube URL or ID">
-          <button id="yt-load-btn" class="control-button" style="height:36px;">Load YT</button>
-        </div>
+  
 
 	
     </div>
     
-    <div class="image-display-container">
+      <div class="image-display-container">
         <div id="image-filename-display"></div>
         <img id="synced-image" src="" alt="Audio synced image" style="display: none;">
     </div>
