@@ -8,22 +8,26 @@
 
   
 <style>
-/* --- Olive Green Theme --- */
+/* --- Apple Music Inspired Theme --- */
 :root {
-  --olive-green-dark: #333d29;
-  --olive-green-medium: #545b4c;
-  --olive-green-light: #7b816f;
-  --off-white: #f5f5f5;
+  /* Apple Music-inspired dark palette */
+  --am-black: #111111; /* Main background color, a deep black */
+  --am-gray-dark: #2c2c2e; /* Dark gray for panel backgrounds */
+  --am-gray-medium: #48484a; /* Medium gray for control backgrounds */
+  --am-gray-light: #8e8e93; /* Light gray for inactive text/icons */
+  --am-white: #ffffff; /* White for main text and icons */
+  --am-accent: #ff4e6b; /* Apple Music's vibrant pink for accents */
+
   --border-radius: 8px;
-  --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .audio-player-container {
   max-width: 800px;
   margin: 2rem auto;
   padding: 2rem;
-  background-color: var(--olive-green-dark);
-  color: var(--off-white);
+  background-color: var(--am-black);
+  color: var(--am-white);
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow);
 }
@@ -41,7 +45,7 @@
   max-width: 100%;
   height: auto;
   border-radius: var(--border-radius);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 #image-filename-display {
@@ -49,7 +53,7 @@
   margin-bottom: 1rem;
   font-size: 1.2em;
   font-weight: bold;
-  color: var(--off-white);
+  color: var(--am-gray-light);
   text-align: center;
 }
 
@@ -69,7 +73,7 @@
 #progress-bar-track {
   width: 100%;
   height: 8px;
-  background-color: var(--olive-green-medium);
+  background-color: var(--am-gray-dark);
   border-radius: 4px;
   position: absolute;
   top: 50%;
@@ -79,7 +83,7 @@
 #progress-bar-fill {
   height: 100%;
   width: 0;
-  background-color: var(--olive-green-light);
+  background-color: var(--am-accent);
   border-radius: 4px;
 }
 
@@ -107,7 +111,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: var(--off-white);
+  background-color: var(--am-white);
   top: 50%;
   transform: translateY(-50%);
   pointer-events: none;
@@ -119,8 +123,8 @@
   top: -25px;
   left: 50%;
   transform: translateX(-50%);
-  background-color: var(--olive-green-dark);
-  color: var(--off-white);
+  background-color: var(--am-gray-dark);
+  color: var(--am-white);
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 0.8em;
@@ -142,10 +146,12 @@
   margin-top: 10px;
   font-family: monospace;
   font-size: 0.9rem;
+  color: var(--am-gray-light);
 }
 
+/* --- Dark Audio Controls Panel --- */
 .controls-background {
-  background-color: rgba(123, 129, 111, 0.2);
+  background-color: var(--am-gray-dark);
   border-radius: 50px;
   padding: 20px;
   margin: 1rem 0;
@@ -156,8 +162,8 @@
 }
 
 .controls-background button {
-  background-color: var(--olive-green-medium);
-  color: var(--off-white);
+  background-color: var(--am-gray-medium);
+  color: var(--am-white);
   border: none;
   border-radius: 50%;
   width: 40px;
@@ -176,7 +182,7 @@
 #volume-slider, #speed-slider {
   width: 100px;
   -webkit-appearance: none;
-  background-color: var(--olive-green-light);
+  background-color: var(--am-gray-medium);
   border-radius: 4px;
   height: 8px;
   cursor: pointer;
@@ -187,7 +193,7 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background-color: var(--off-white);
+  background-color: var(--am-accent);
   cursor: pointer;
 }
 
@@ -195,13 +201,13 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background-color: var(--off-white);
+  background-color: var(--am-accent);
   cursor: pointer;
   border: none;
 }
 
 #volume-slider::-moz-range-track, #speed-slider::-moz-range-track {
-  background-color: var(--olive-green-light);
+  background-color: var(--am-gray-medium);
   border-radius: 4px;
   height: 8px;
 }
@@ -209,7 +215,7 @@
 #speed-display {
   width: 50px;
   text-align: center;
-  color: var(--off-white);
+  color: var(--am-white);
 }
 
 #play-pause-btn {
@@ -223,10 +229,10 @@
   transform: scale(1.1);
 }
 
-/* --- New Fast-Forward Button Style --- */
+/* --- Fast-Forward Button Style --- */
 #silent-fast-fwd-btn {
-  background-color: var(--olive-green-medium);
-  color: var(--off-white);
+  background-color: var(--am-gray-medium);
+  color: var(--am-white);
   border: none;
   border-radius: 50%;
   width: 40px;
@@ -237,18 +243,18 @@
 }
 
 #silent-fast-fwd-btn:hover {
-  background-color: var(--olive-green-light);
+  background-color: var(--am-gray-dark);
 }
 
 /* Hover effect for all buttons within the control bar */
 .controls-background button:hover {
-  background-color: var(--olive-green-light);
+  background-color: var(--am-gray-dark);
 }
 
-/* --- New Repeat Segment Button Style --- */
+/* --- Repeat Segment Button Style --- */
 #repeat-segment-btn {
-  background-color: var(--olive-green-medium);
-  color: var(--off-white);
+  background-color: var(--am-gray-medium);
+  color: var(--am-white);
   border: none;
   border-radius: 50%;
   width: 40px;
@@ -259,14 +265,14 @@
 }
 
 #repeat-segment-btn:hover {
-  background-color: var(--olive-green-light);
+  background-color: var(--am-gray-dark);
 }
 
 /* Active state for the repeat button */
 #repeat-segment-btn.active {
-  background-color: #f7a36c; /* A distinct, eye-catching color */
-  color: var(--olive-green-dark);
-  border: 2px solid var(--olive-green-dark);
+  background-color: var(--am-accent);
+  color: var(--am-white);
+  border: none;
 }
 
 /* --- Accordion & Jump To Buttons Styles --- */
@@ -282,8 +288,8 @@
 }
 
 .accordion-header {
-  background-color: var(--olive-green-medium);
-  color: var(--off-white);
+  background-color: var(--am-gray-dark);
+  color: var(--am-white);
   cursor: pointer;
   padding: 10px;
   width: 100%;
@@ -297,13 +303,13 @@
 }
 
 .accordion-header:hover {
-  background-color: var(--olive-green-light);
+  background-color: var(--am-gray-medium);
 }
 
 .accordion-content {
   display: none;
   padding: 10px;
-  background-color: #4a523e;
+  background-color: var(--am-gray-dark);
   overflow: hidden;
   border-radius: 0 0 var(--border-radius) var(--border-radius);
   flex-wrap: wrap;
@@ -315,9 +321,9 @@
 }
 
 .jump-to-button {
-  background-color: var(--olive-green-medium);
-  color: var(--off-white);
-  border: 1px solid var(--olive-green-light);
+  background-color: var(--am-gray-medium);
+  color: var(--am-white);
+  border: 1px solid var(--am-gray-dark);
   border-radius: var(--border-radius);
   padding: 8px 12px;
   cursor: pointer;
@@ -326,15 +332,16 @@
 }
 
 .jump-to-button:hover {
-  background-color: var(--olive-green-light);
+  background-color: var(--am-gray-light);
 }
+
 #repeat-all-btn {
-    background-color: var(--olive-green-medium);
-    color: var(--off-white);
+    background-color: var(--am-gray-medium);
+    color: var(--am-white);
     border: none;
     border-radius: 50%;
-    width: auto; /* Allow the button to grow with the text */
-    min-width: 40px; /* Maintain minimum circular size */
+    width: auto;
+    min-width: 40px;
     height: 40px;
     font-size: 1.2rem;
     cursor: pointer;
@@ -342,36 +349,49 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 5px; /* Adds a small gap between the icon and text */
-    padding: 0 10px; /* Add some padding to accommodate text */
+    gap: 5px;
+    padding: 0 10px;
 }
 
 #repeat-all-btn:hover {
-    background-color: var(--olive-green-light);
+    background-color: var(--am-gray-dark);
 }
 
 /* Active state for the repeat-all button */
 #repeat-all-btn.active {
-    background-color: #f7a36c;
-    border: 2px solid var(--olive-green-dark);
+    background-color: var(--am-accent);
+    color: var(--am-white);
+    border: none;
 }
 
 /* Style for the dynamically inserted text */
-#repeat-all-btn .repeat-all-text {
-    font-size: 0.8rem; /* Use a smaller font size */
-    font-weight: normal; /* Ensure it's not bold */
-    color: var(--olive-green-dark); /* Color the text for the active state */
-    display: none; /* Hide by default */
-}
-
-/* Make the text visible when the button is active */
 #repeat-all-btn.active .repeat-all-text {
+    font-size: 0.8rem;
+    font-weight: normal;
+    color: var(--am-white);
     display: inline;
 }
 
+#speed-slider, #volume-slider {
+  background-color: var(--am-gray-medium);
+}
+
+#speed-slider::-webkit-slider-thumb, #volume-slider::-webkit-slider-thumb {
+  background-color: var(--am-accent);
+}
+
+#speed-slider::-moz-range-thumb, #volume-slider::-moz-range-thumb {
+  background-color: var(--am-accent);
+}
+
+.progress-marker::after {
+  background-color: var(--am-gray-dark);
+  color: var(--am-white);
+}
+
+</style>
 
 
-  </style>
 
 </head>
 <body>
