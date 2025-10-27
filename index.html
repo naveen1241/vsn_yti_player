@@ -768,7 +768,7 @@ updateImageSyncSource();
         return acc;
     }, {});
     
-// --- Create the sorted timestamps array (must be AFTER flatImageSyncData) ---
+// --- Create the sorted timestamps array (must be AFTER flatImageSyncData) ----
 sortedSegmentTimestamps = Object.keys(flatImageSyncData).map(parseTime).sort((a, b) => a - b);
     /**
      * Rewinds the audio by 10 seconds, not going below zero.
