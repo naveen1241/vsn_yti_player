@@ -375,9 +375,11 @@
 
 </head>
 <body>
+
+ <div class="audio-player-container">
 <!-- Audio source selector & YouTube input -->
        <div style="display:flex; align-items:center; gap:8px;">
-  <label style="font-size:0.9rem;">Source:</label>
+  <label style="font-size:0.9rem;">Audio Source:</label>
   <select id="sourceSelect" class="control-button" style="height:36px; min-width:110px;">
     <option value="local" selected>VISVAS Audio</option>
     <option value="youtube">M. S. Subbulakshmi</option>
@@ -386,8 +388,6 @@
   <input id="yt-url-input" type="text" placeholder="YouTube url or id" style="width:240px; padding:6px; border-radius:6px; border:none; display:none;" title="Paste YouTube URL or ID">
   <button id="yt-load-btn" class="control-button" style="height:36px; display:none;">Load Other YouTube</button>
 </div>
-
- <div class="audio-player-container">
     <!-- Custom controls in an oval background -->
     <div class="controls-background">
         <button id="rewind-10-btn" title="Rewind 10 seconds"><i class="fa-solid fa-backward-fast"></i></button>
@@ -549,28 +549,38 @@ let isInternalSeek = false;
     }
 
     // When user changes source via drop-down
-    sourceSelect.addEventListener('change', (e) => {
-        const val = e.target.value;
-        if (val === 'youtube') {
-            // switch UI to youtube mode but do not start playback automatically
-            if (ytPlayer) {
-                youtubeContainer.style.display = 'block';
-                audioPlayer.pause();
-                usingYouTube = true;
-                startYTSyncLoop();
-            } else {
-                // keep youtube container hidden until loaded explicitly
-                youtubeContainer.style.display = 'none';
-                usingYouTube = false;
-            }
-        } else {
-            // back to local
-            youtubeContainer.style.display = 'none';
-            stopYTSyncLoop();
-            if (ytPlayer) try { ytPlayer.pauseVideo(); } catch(e){}
-            usingYouTube = false;
-        }
-    });
+    // When user changes source via drop-down
+sourceSelect.addEventListener('change', (e) => {
+    const val = e.target.value;
+
+    // Pause whatever is currently playing
+    if (!usingYouTube && !audioPlayer.paused) {
+        audioPlayer.pause();
+        playPauseBtn.textContent = '▶';
+    }
+    if (usingYouTube && ytPlayer) {
+        try { ytPlayer.pauseVideo(); } catch(e){ console.warn(e); }
+        stopYTSyncLoop();
+    }
+
+    if (val === 'youtube') {
+        // Switch to YouTube mode
+        youtubeContainer.style.display = 'block';
+        usingYouTube = true;
+        // Do not autoplay, user can press play
+    } else {
+        // Switch to local audio
+        youtubeContainer.style.display = 'none';
+        usingYouTube = false;
+        // Do not autoplay, user can press play
+    }
+
+    // Update image sync data immediately for the new source
+    setImageSyncData(val);
+    createProgressBarMarkers();
+    createJumpToButtons();
+});
+
 
     // Load YT video id/button
     ytLoadBtn.addEventListener('click', () => {
