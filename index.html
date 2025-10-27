@@ -499,15 +499,19 @@ let isInternalSeek = false;
     const youtubeContainer = document.getElementById('youtube-container');
 
     // Parse video id from full URL or id (returns null if none)
-    function extractYouTubeId(urlOrId) {
-      if (!urlOrId) return null;
-      // common patterns
-      const idMatch = urlOrId.match(/(?:v=|\/)([0-9A-Za-z_-]{11})(?:[&?]|$)/);
-      if (idMatch && idMatch[1]) return idMatch[1];
-      // if input itself is 11-char id
-      if (/^[0-9A-Za-z_-]{11}$/.test(urlOrId.trim())) return urlOrId.trim();
-      return null;
-    }
+   function extractYouTubeId(urlOrId) {
+    if (!urlOrId) return null;
+    urlOrId = urlOrId.trim();
+
+    // If it's already a 11-character ID
+    if (/^[0-9A-Za-z_-]{11}$/.test(urlOrId)) return urlOrId;
+
+    // Match standard YouTube URL formats
+    const regex = /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([0-9A-Za-z_-]{11})/;
+    const match = urlOrId.match(regex);
+    return match ? match[1] : null;
+}
+
 
     // Called by the YT API when it loads
     window.onYouTubeIframeAPIReady = function() {
@@ -960,7 +964,7 @@ repeatAllBtn.addEventListener('click', () => {
     // Initialize volume
     volumeSlider.value = 0.5;
     audioPlayer.volume = 0.5;
-    ytUrlInput.value = 'RDATflA6WOy0I';
+    ytUrlInput.value = 'ATflA6WOy0I';
 
 ytUrlInput.addEventListener('input', () => {
   ytLoadBtn.disabled = !ytUrlInput.value.trim();
