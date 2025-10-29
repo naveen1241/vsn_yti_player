@@ -573,29 +573,27 @@ let isInternalSeek = false;
 sourceSelect.addEventListener('change', (e) => {
     const val = e.target.value;
 
-    // Pause whatever is currently playing
-    if (!usingYouTube && !audioPlayer.paused) {
-        audioPlayer.pause();
-        playPauseBtn.textContent = '▶';
-    }
+    // --- Always pause current playback first ---
     if (usingYouTube && ytPlayer) {
         try { ytPlayer.pauseVideo(); } catch(e){ console.warn(e); }
         stopYTSyncLoop();
+    } else if (!audioPlayer.paused) {
+        audioPlayer.pause();
     }
 
+    // Reset the play button icon
+    playPauseBtn.textContent = '▶';
+
+    // --- Switch mode ---
     if (val === 'youtube') {
-        // Switch to YouTube mode
         youtubeContainer.style.display = 'block';
         usingYouTube = true;
-        // Do not autoplay, user can press play
     } else {
-        // Switch to local audio
         youtubeContainer.style.display = 'none';
         usingYouTube = false;
-        // Do not autoplay, user can press play
     }
 
-    // Update image sync data immediately for the new source
+    // --- Refresh the image and jump data for the selected source ---
     setImageSyncData(val);
     createProgressBarMarkers();
     createJumpToButtons();
