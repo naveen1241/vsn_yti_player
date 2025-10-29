@@ -540,63 +540,33 @@ let isInternalSeek = false;
     };
 
     // create or load video id into player
-   function ensureYTPlayer(videoId) {
-  return new Promise((resolve) => {
-    if (!videoId) return resolve(null);
-
-    // if player already exists, just cue the new video
-    if (ytPlayer) {
-      try {
-        ytPlayer.cueVideoById(videoId);
-        return resolve(ytPlayer);
-      } catch (e) {
-        console.warn(e);
-      }
-    }
-
-    // --- create new YouTube Player ---
-    ytPlayer = new YT.Player('youtube-player', {
-      height: '0',
-      width: '0', // hidden
-      videoId,
-      playerVars: {
-        autoplay: 1,       // try to autoplay
-        mute: 1,           // autoplay works only when muted
-        playsinline: 1,    // needed for iOS & iframe playback
-        controls: 0,
-        disablekb: 1,
-        modestbranding: 1
-      },
-      events: {
-        onReady: () => {
-          console.log('YT player ready for', videoId);
+    function ensureYTPlayer(videoId) {
+      return new Promise((resolve) => {
+        if (!videoId) return resolve(null);
+        // if player exists, just load the video
+        if (ytPlayer) {
           try {
-            ytPlayer.playVideo(); // start muted playback immediately
-          } catch (err) {
-            console.warn('YT autoplay failed:', err);
+            ytPlayer.cueVideoById(videoId);
+            return resolve(ytPlayer);
+          } catch (e) { console.warn(e); }
+        }
+        // create new YT.Player
+        ytPlayer = new YT.Player('youtube-player', {
+          height: '0', width: '0', // hidden
+          videoId,
+          playerVars: { controls: 0, disablekb: 1, modestbranding: 1 },
+          events: {
+            onReady: () => {
+              console.log('YT player ready for', videoId);
+              resolve(ytPlayer);
+            },
+            onStateChange: (e) => {
+              // nothing heavy here; sync loop handles updates
+            }
           }
-          resolve(ytPlayer);
-        },
-        onStateChange: (e) => {
-          // nothing heavy here; sync loop handles updates
-        }
-      }
-    });
-
-    // --- unmute once user interacts anywhere ---
-    document.addEventListener(
-      'click',
-      () => {
-        if (ytPlayer && ytPlayer.isMuted()) {
-          ytPlayer.unMute();
-          console.log('User interaction → unmuted YouTube audio');
-        }
-      },
-      { once: true }
-    );
-  });
-}
-
+        });
+      });
+    }
 
     // When user changes source via drop-down
     // When user changes source via drop-down
@@ -934,53 +904,31 @@ function forward10Seconds() {
     }
 
     // -- Play/Pause and Control handlers --
-        playPauseBtn.addEventListener('click', () => {
-        if (sourceSelect.value === 'youtube') {
-            // YouTube mode
-            if (!ytPlayer) {
-                const id = extractYouTubeId(ytUrlInput.value);
-                if (!id) { alert('Enter a valid YouTube ID or URL'); return; }
-                ensureYTPlayer(id).then(() => {
-                    usingYouTube = true;
-                    youtubeContainer.style.display = 'block';
-                    audioPlayer.pause();
-                    try { ytPlayer.playVideo(); } catch(e){ console.warn(e); }
-                    playPauseBtn.textContent = '⏸';
-                    startYTSyncLoop();
-                });
-                return;
-            }
-            const state = ytPlayer.getPlayerState && ytPlayer.getPlayerState();
-            if (state === YT.PlayerState.PLAYING) {
-                ytPlayer.pauseVideo();
-                playPauseBtn.textContent = '▶';
-                stopYTSyncLoop();
-            } else {
-                audioPlayer.pause();
-                youtubeContainer.style.display = 'block';
-                try { ytPlayer.playVideo(); } catch(e){ console.warn(e); }
-                playPauseBtn.textContent = '⏸';
-                usingYouTube = true;
-                startYTSyncLoop();
-            }
-        } else {
-            // Local MP3 mode
-            // If youtube was active, pause it and stop sync
-            if (usingYouTube && ytPlayer) {
-                try { ytPlayer.pauseVideo(); } catch(e){}
-                stopYTSyncLoop();
-                youtubeContainer.style.display = 'none';
-                usingYouTube = false;
-            }
-            if (audioPlayer.paused) {
-                audioPlayer.play();
-                playPauseBtn.textContent = '⏸';
-            } else {
-                audioPlayer.pause();
-                playPauseBtn.textContent = '▶';
-            }
-        }
-    });
+       playPauseBtn.addEventListener('click', () => {
+  if (usingYouTube && ytPlayer) {
+    const state = ytPlayer.getPlayerState();
+    if (state === YT.PlayerState.PAUSED || state === YT.PlayerState.CUED) {
+      ytPlayer.playVideo();
+      ytPlayer.unMute();
+      playPauseBtn.textContent = '⏸';
+      console.log('User clicked → playing YouTube audio');
+    } else if (state === YT.PlayerState.PLAYING) {
+      ytPlayer.pauseVideo();
+      playPauseBtn.textContent = '▶';
+      console.log('Paused YouTube audio');
+    }
+  } else {
+    // your regular HTML audio logic here
+    if (audioPlayer.paused) {
+      audioPlayer.play();
+      playPauseBtn.textContent = '⏸';
+    } else {
+      audioPlayer.pause();
+      playPauseBtn.textContent = '▶';
+    }
+  }
+});
+
 
 
     rewind10Btn.addEventListener('click', rewind10Seconds);
