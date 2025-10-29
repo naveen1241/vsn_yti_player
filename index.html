@@ -573,27 +573,29 @@ let isInternalSeek = false;
 sourceSelect.addEventListener('change', (e) => {
     const val = e.target.value;
 
-    // --- Always pause current playback first ---
+    // Pause whatever is currently playing
+    if (!usingYouTube && !audioPlayer.paused) {
+        audioPlayer.pause();
+        playPauseBtn.textContent = '▶';
+    }
     if (usingYouTube && ytPlayer) {
         try { ytPlayer.pauseVideo(); } catch(e){ console.warn(e); }
         stopYTSyncLoop();
-    } else if (!audioPlayer.paused) {
-        audioPlayer.pause();
     }
 
-    // Reset the play button icon
-    playPauseBtn.textContent = '▶';
-
-    // --- Switch mode ---
     if (val === 'youtube') {
+        // Switch to YouTube mode
         youtubeContainer.style.display = 'block';
         usingYouTube = true;
+        // Do not autoplay, user can press play
     } else {
+        // Switch to local audio
         youtubeContainer.style.display = 'none';
         usingYouTube = false;
+        // Do not autoplay, user can press play
     }
 
-    // --- Refresh the image and jump data for the selected source ---
+    // Update image sync data immediately for the new source
     setImageSyncData(val);
     createProgressBarMarkers();
     createJumpToButtons();
@@ -904,21 +906,86 @@ function forward10Seconds() {
     }
 
     // -- Play/Pause and Control handlers --
-       playPauseBtn.addEventListener('click', () => {
-  if (usingYouTube && ytPlayer) {
-    const state = ytPlayer.getPlayerState();
-    if (state === YT.PlayerState.PAUSED || state === YT.PlayerState.CUED) {
-      ytPlayer.playVideo();
-      ytPlayer.unMute();
-      playPauseBtn.textContent = '⏸';
-      console.log('User clicked → playing YouTube audio');
-    } else if (state === YT.PlayerState.PLAYING) {
+      // -- Play/Pause and Control handlers --
+playPauseBtn.addEventListener('click', () => {
+  if (sourceSelect.value === 'youtube') {
+    // --- YouTube Mode ---
+    const id = extractYouTubeId(ytUrlInput.value);
+    if (!id) {
+      alert('Enter a valid YouTube ID or URL');
+      return;
+    }
+
+    // Create player if not already loaded
+    if (!ytPlayer) {
+      ensureYTPlayer(id).then(() => {
+        usingYouTube = true;
+        youtubeContainer.style.display = 'block';
+        audioPlayer.pause();
+
+        try {
+          // Start muted — autoplay allowed
+          ytPlayer.mute();
+          ytPlayer.playVideo();
+          playPauseBtn.textContent = '⏸';
+          startYTSyncLoop();
+
+          // Unmute after short delay (still inside same user gesture)
+          setTimeout(() => {
+            try {
+              ytPlayer.unMute();
+              console.log('YT unmuted after user click');
+            } catch (err) {
+              console.warn('Unmute failed:', err);
+            }
+          }, 300);
+        } catch (e) {
+          console.warn('YT play failed:', e);
+        }
+      });
+      return;
+    }
+
+    // --- Player already exists ---
+    const state = ytPlayer.getPlayerState && ytPlayer.getPlayerState();
+    if (state === YT.PlayerState.PLAYING) {
       ytPlayer.pauseVideo();
       playPauseBtn.textContent = '▶';
-      console.log('Paused YouTube audio');
+      stopYTSyncLoop();
+    } else {
+      audioPlayer.pause();
+      youtubeContainer.style.display = 'block';
+      usingYouTube = true;
+
+      try {
+        // Start muted to satisfy autoplay policy
+        ytPlayer.mute();
+        ytPlayer.playVideo();
+        playPauseBtn.textContent = '⏸';
+        startYTSyncLoop();
+
+        // Unmute after a brief delay (user gesture already valid)
+        setTimeout(() => {
+          try {
+            ytPlayer.unMute();
+            console.log('YT unmuted after user click');
+          } catch (err) {
+            console.warn('Unmute failed:', err);
+          }
+        }, 300);
+      } catch (e) {
+        console.warn('YT playback error:', e);
+      }
     }
   } else {
-    // your regular HTML audio logic here
+    // --- Local MP3 Mode ---
+    if (usingYouTube && ytPlayer) {
+      try { ytPlayer.pauseVideo(); } catch (e) {}
+      stopYTSyncLoop();
+      youtubeContainer.style.display = 'none';
+      usingYouTube = false;
+    }
+
     if (audioPlayer.paused) {
       audioPlayer.play();
       playPauseBtn.textContent = '⏸';
