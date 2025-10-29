@@ -430,9 +430,10 @@
     <option value="local" selected>VISVAS Audio</option>
     <option value="youtube">M. S. Subbulakshmi</option>
   </select>
-<button id="home-btn" onclick="goHome()" title="Go to homepage">
+<button id="home-btn" title="Go to homepage">
   <i class="fa-solid fa-house"></i> Home
 </button>
+
 
   <input id="yt-url-input" type="text" placeholder="YouTube url or id" style="width:240px; padding:6px; border-radius:6px; border:none; display:none;" title="Paste YouTube URL or ID">
   <button id="yt-load-btn" class="control-button" style="height:36px; display:none;">Load Other YouTube</button>
@@ -546,6 +547,15 @@ let isInternalSeek = false;
     const ytUrlInput = document.getElementById('yt-url-input');
     const ytLoadBtn = document.getElementById('yt-load-btn');
     const youtubeContainer = document.getElementById('youtube-container');
+const homeBtn = document.getElementById('home-btn');
+if (homeBtn) {
+  homeBtn.addEventListener('click', () => {
+    // go to your site home
+    window.location.href = 'https://www.nivi108.com';
+    // Or if you prefer: go back to previous page:
+    // window.history.back();
+  });
+}
 
 
 function goHome() {
