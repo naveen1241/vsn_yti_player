@@ -383,6 +383,32 @@
 #speed-slider::-moz-range-thumb, #volume-slider::-moz-range-thumb {
   background-color: var(--am-accent);
 }
+/* --- Home Button (Apple-style) --- */
+#home-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: var(--am-gray-medium);
+  color: var(--am-white);
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+#home-btn:hover {
+  background-color: var(--am-gray-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5);
+}
+
+#home-btn i {
+  color: var(--am-accent);
+  font-size: 1rem;
+}
 
 .progress-marker::after {
   background-color: var(--am-gray-dark);
@@ -404,6 +430,9 @@
     <option value="local" selected>VISVAS Audio</option>
     <option value="youtube">M. S. Subbulakshmi</option>
   </select>
+<button id="home-btn" onclick="goHome()" title="Go to homepage">
+  <i class="fa-solid fa-house"></i> Home
+</button>
 
   <input id="yt-url-input" type="text" placeholder="YouTube url or id" style="width:240px; padding:6px; border-radius:6px; border:none; display:none;" title="Paste YouTube URL or ID">
   <button id="yt-load-btn" class="control-button" style="height:36px; display:none;">Load Other YouTube</button>
@@ -517,6 +546,13 @@ let isInternalSeek = false;
     const ytUrlInput = document.getElementById('yt-url-input');
     const ytLoadBtn = document.getElementById('yt-load-btn');
     const youtubeContainer = document.getElementById('youtube-container');
+
+
+function goHome() {
+  window.location.href = 'https://www.nivi108.com';
+}
+
+
 
     // Parse video id from full URL or id (returns null if none)
    function extractYouTubeId(urlOrId) {
